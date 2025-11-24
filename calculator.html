@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calculator-container {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 350px;
+            width: 100%;
+        }
+
+        .calculator-title {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .display {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: right;
+            font-size: 32px;
+            font-weight: 500;
+            color: #2d3748;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-number {
+            background: #f7fafc;
+            color: #2d3748;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-number:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+
+        .btn-operator {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-operator:hover {
+            background: #3182ce;
+        }
+
+        .btn-equals {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-equals:hover {
+            background: #38a169;
+        }
+
+        .btn-clear {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #e53e3e;
+        }
+
+        .btn-zero {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 480px) {
+            .calculator-container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            .display {
+                font-size: 24px;
+                padding: 15px;
+            }
+            
+            .btn {
+                padding: 15px;
+                font-size: 18px;
+                min-height: 50px;
+            }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <main class="calculator-container">
+   <h1 id="calculator-title" class="calculator-title">Calculator</h1>
+   <div id="display" class="display">
+    0
+   </div>
+   <div class="buttons"><button class="btn btn-clear" onclick="clearDisplay()">C</button> <button class="btn btn-clear" onclick="deleteLast()">⌫</button> <button class="btn btn-operator" onclick="appendToDisplay('/')" aria-label="divide">÷</button> <button class="btn btn-operator" onclick="appendToDisplay('*')" aria-label="multiply">×</button> <button class="btn btn-number" onclick="appendToDisplay('7')">7</button> <button class="btn btn-number" onclick="appendToDisplay('8')">8</button> <button class="btn btn-number" onclick="appendToDisplay('9')">9</button> <button class="btn btn-operator" onclick="appendToDisplay('-')" aria-label="subtract">−</button> <button class="btn btn-number" onclick="appendToDisplay('4')">4</button> <button class="btn btn-number" onclick="appendToDisplay('5')">5</button> <button class="btn btn-number" onclick="appendToDisplay('6')">6</button> <button class="btn btn-operator" onclick="appendToDisplay('+')" aria-label="add">+</button> <button class="btn btn-number" onclick="appendToDisplay('1')">1</button> <button class="btn btn-number" onclick="appendToDisplay('2')">2</button> <button class="btn btn-number" onclick="appendToDisplay('3')">3</button> <button class="btn btn-equals" onclick="calculate()" rowspan="2" style="grid-row: span 2;">=</button> <button class="btn btn-number btn-zero" onclick="appendToDisplay('0')">0</button> <button class="btn btn-number" onclick="appendToDisplay('.')">.</button>
+   </div>
+  </main>
+  <script>
+        let display = document.getElementById('display');
+        let currentInput = '0';
+        let shouldResetDisplay = false;
+
+        // Default configuration
+        const defaultConfig = {
+            calculator_title: "Calculator"
+        };
+
+        function appendToDisplay(value) {
+            if (shouldResetDisplay) {
+                currentInput = '';
+                shouldResetDisplay = false;
+            }
+            
+            if (currentInput === '0' && value !== '.') {
+                currentInput = value;
+            } else {
+                currentInput += value;
+            }
+            
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            // Replace operators with display symbols
+            let displayValue = currentInput
+                .replace(/\*/g, '×')
+                .replace(/\//g, '÷')
+                .replace(/\-/g, '−');
+            
+            display.textContent = displayValue || '0';
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            shouldResetDisplay = false;
+            updateDisplay();
+        }
+
+        function deleteLast() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        function calculate() {
+            try {
+                // Replace display symbols back to operators for calculation
+                let expression = currentInput
+                    .replace(/×/g, '*')
+                    .replace(/÷/g, '/')
+                    .replace(/−/g, '-');
+                
+                // Remove any trailing operators
+                expression = expression.replace(/[+\-*/]+$/, '');
+                
+                // Check for empty expression
+                if (!expression || expression === '' || expression === '0') {
+                    return;
+                }
+                
+                // Parse and calculate step by step to avoid eval issues
+                let result = parseExpression(expression);
+                
+                if (result === null || !isFinite(result) || isNaN(result)) {
+                    throw new Error('Invalid result');
+                }
+                
+                // Round to avoid floating point precision issues
+                result = Math.round(result * 1000000000) / 1000000000;
+                
+                currentInput = result.toString();
+                shouldResetDisplay = true;
+                updateDisplay();
+            } catch (error) {
+                display.textContent = 'Error';
+                setTimeout(() => {
+                    clearDisplay();
+                }, 2000);
+            }
+        }
+
+        function parseExpression(expr) {
+            // Simple calculator parser that handles +, -, *, / operations
+            try {
+                // Split by operators while keeping the operators
+                let tokens = expr.split(/([+\-*/])/).filter(token => token !== '');
+                
+                if (tokens.length === 1) {
+                    return parseFloat(tokens[0]);
+                }
+                
+                // Handle multiplication and division first
+                for (let i = 1; i < tokens.length; i += 2) {
+                    if (tokens[i] === '*') {
+                        let result = parseFloat(tokens[i-1]) * parseFloat(tokens[i+1]);
+                        tokens.splice(i-1, 3, result.toString());
+                        i -= 2;
+                    } else if (tokens[i] === '/') {
+                        if (parseFloat(tokens[i+1]) === 0) {
+                            throw new Error('Division by zero');
+                        }
+                        let result = parseFloat(tokens[i-1]) / parseFloat(tokens[i+1]);
+                        tokens.splice(i-1, 3, result.toString());
+                        i -= 2;
+                    }
+                }
+                
+                // Handle addition and subtraction
+                let result = parseFloat(tokens[0]);
+                for (let i = 1; i < tokens.length; i += 2) {
+                    if (tokens[i] === '+') {
+                        result += parseFloat(tokens[i+1]);
+                    } else if (tokens[i] === '-') {
+                        result -= parseFloat(tokens[i+1]);
+                    }
+                }
+                
+                return result;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            if (key >= '0' && key <= '9' || key === '.') {
+                appendToDisplay(key);
+            } else if (key === '+' || key === '-') {
+                appendToDisplay(key);
+            } else if (key === '*') {
+                appendToDisplay('*');
+            } else if (key === '/') {
+                event.preventDefault();
+                appendToDisplay('/');
+            } else if (key === 'Enter' || key === '=') {
+                event.preventDefault();
+                calculate();
+            } else if (key === 'Escape' || key === 'c' || key === 'C') {
+                clearDisplay();
+            } else if (key === 'Backspace') {
+                deleteLast();
+            }
+        });
+
+        // Element SDK implementation
+        async function onConfigChange(config) {
+            const titleElement = document.getElementById('calculator-title');
+            titleElement.textContent = config.calculator_title || defaultConfig.calculator_title;
+        }
+
+        function mapToCapabilities(config) {
+            return {
+                recolorables: [],
+                borderables: [],
+                fontEditable: undefined,
+                fontSizeable: undefined
+            };
+        }
+
+        function mapToEditPanelValues(config) {
+            return new Map([
+                ["calculator_title", config.calculator_title || defaultConfig.calculator_title]
+            ]);
+        }
+
+        // Initialize Element SDK
+        if (window.elementSdk) {
+            window.elementSdk.init({
+                defaultConfig,
+                onConfigChange,
+                mapToCapabilities,
+                mapToEditPanelValues
+            });
+        }
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a371cee426da9b7',t:'MTc2Mzk2ODUwNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
